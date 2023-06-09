@@ -1,17 +1,69 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Alert, Image } from 'react-native';
+import {
+  getCurrentPositionAsync,
+  useForegroundPermissions,
+  PermissionStatus,
+} from 'expo-location';
+
 import OutlinedButton from '../UI/OutlinedButton';
 import { Colors } from '../../constants/colors';
+import { getMapPreview } from '../../utils/location';
 
 const LocationPicker = () => {
-  const getLocationHandler = () => {};
+  const [location, setLocation] = useState(null);
+  const [locationPermission, requestPermission] = useForegroundPermissions();
+
+  const verifyPermissions = async () => {
+    if (
+      locationPermission.status === PermissionStatus.UNDETERMINED ||
+      locationPermission.status === PermissionStatus.DENIED
+    ) {
+      const permissionResponse = await requestPermission();
+      return permissionResponse.granted;
+    }
+
+    if (locationPermission.status === PermissionStatus.DENIED) {
+      Alert.alert(
+        'Insufficient permissions!',
+        'You need to grant location permissions for this app'
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const getLocationHandler = async () => {
+    const hasPermission = await verifyPermissions();
+
+    if (!hasPermission) {
+      return;
+    }
+
+    const location = await getCurrentPositionAsync();
+    setLocation({
+      lat: location.coords.latitude,
+      long: location.coords.longitude,
+    });
+  };
 
   const pickOnMapHandler = () => {};
+
+  let locationPreview = <Text>No location picked yet...</Text>;
+
+  if (location) {
+    locationPreview = (
+      <Image
+        style={styles.image}
+        source={{ uri: getMapPreview(location.lat, location.long) }}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Choose the location</Text>
-      <View style={styles.mapContainer}></View>
+      <View style={styles.mapContainer}>{locationPreview}</View>
       <View style={styles.actions}>
         <OutlinedButton
           icon='location'
@@ -65,5 +117,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+  },
+
+  image: {
+    width: '100%',
+    height: 300,
   },
 });

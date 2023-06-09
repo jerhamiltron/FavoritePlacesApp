@@ -35,6 +35,12 @@
         {
           "cameraPermission": "Allow Favorite Places App to access your camera?"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow this application to access location information?"
+        }
       ]
     ]
   }
